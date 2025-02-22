@@ -1,0 +1,52 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: azureServiceConnection
+    value: 'CITI-IAC-TF'
+  - name: workingDirectory
+    value: '$(Build.SourcesDirectory)'
+
+stages:
+- stage: Deploy
+  displayName: 'Deploy Infrastructure'
+  jobs:
+  - job: Terraform
+    displayName: 'Terraform tasks'
+    steps:
+      - task: AzureCLI@2
+        displayName: Terraform Init
+        inputs:
+          azureSubscription: $(azureServiceConnection)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            terraform init -backend-config="storage_account_name=cskstgtfstate" \
+                           -backend-config="container_name=statefiles" \
+                           -backend-config="key=testing.tfstate" \
+                           -backend-config="access_key=${TF_STATE_ACCESS_KEY}"
+          workingDirectory: $(workingDirectory)
+        env:
+          TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
+      - task: AzureCLI@2
+        displayName: Terraform Plan
+        inputs:
+          azureSubscription: $(azureServiceConnection)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            terraform plan 
+          workingDirectory: $(workingDirectory)
+      - task: AzureCLI@2
+        displayName: Terraform Apply
+        inputs:
+          azureSubscription: $(azureServiceConnection)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            terraform apply -auto-approve
+          workingDirectory: $(workingDirectory)
+         
