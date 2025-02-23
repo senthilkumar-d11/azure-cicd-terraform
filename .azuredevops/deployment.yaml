@@ -1,0 +1,33 @@
+name: $(Build.SourceBranchName) - $(Build.RequestedFor) - $(date:yyyyMMdd)$(rev:.r)
+
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: azureServiceConnection
+    value: 'CITI-IAC-TF'
+  - name: workingDirectory
+    value: '$(Build.SourcesDirectory)'
+
+stages:
+- stage: Deploy
+  displayName: 'Deploy Infrastructure'
+  jobs:
+  - job: Terraform
+    displayName: 'Terraform tasks'
+    steps:
+      - template: templates/terraform-init.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)
+          TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
+      - template: templates/terraform-plan.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)
+      - template: templates/terraform-apply.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)

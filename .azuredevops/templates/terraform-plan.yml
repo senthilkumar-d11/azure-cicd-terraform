@@ -1,0 +1,14 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Plan'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform plan -out=tfplan
+    workingDirectory: ${{ parameters.workingDirectory }}

@@ -1,0 +1,14 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Validate'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform Validate
+    workingDirectory: ${{ parameters.workingDirectory }}
