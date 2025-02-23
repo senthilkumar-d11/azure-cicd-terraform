@@ -1,0 +1,14 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Destroy'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform apply -auto-approve destroy.tfplan
+    workingDirectory: ${{ parameters.workingDirectory }}

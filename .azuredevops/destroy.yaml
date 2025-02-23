@@ -1,0 +1,42 @@
+name: $(Build.SourceBranchName) - $(Build.RequestedFor) - $(date:yyyyMMdd)$(rev:.r)
+
+trigger: none
+
+parameters: 
+  - name: environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - prd
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: azureServiceConnection
+    value: 'CITI-IAC-TF'
+  - name: workingDirectory
+    value: '$(Build.SourcesDirectory)'
+
+stages:
+- stage: Plan
+  displayName: 'Plan Infrastructure'
+  jobs:
+  - job: Terraform_Plan
+    displayName: 'Terraform Plan'
+    steps:
+      - template: templates/terraform-init.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)
+          TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
+      - template: templates/terraform-plan-destroy.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)
+          tfvarsFile: ${{ parameters.environment }}.tfvars
+      - template: templates/terraform-destroy.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: $(workingDirectory)

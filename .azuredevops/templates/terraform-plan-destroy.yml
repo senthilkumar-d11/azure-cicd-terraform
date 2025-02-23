@@ -1,0 +1,15 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+  tfvarsFile: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Plan for Destroy'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform plan -var-file=${{ parameters.tfvarsFile }} -destroy -out=destroy.tfplan
+    workingDirectory: ${{ parameters.workingDirectory }}

@@ -1,0 +1,20 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+  TF_STATE_ACCESS_KEY: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Init'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform init -backend-config="storage_account_name=cskstgtfstate" \
+                     -backend-config="container_name=statefiles" \
+                     -backend-config="key=testing.tfstate" \
+                     -backend-config="access_key=${TF_STATE_ACCESS_KEY}"
+    workingDirectory: ${{ parameters.workingDirectory }}
+  env:
+    TF_STATE_ACCESS_KEY: ${{ parameters.TF_STATE_ACCESS_KEY }}

@@ -1,0 +1,15 @@
+parameters:
+  azureServiceConnection: ''
+  workingDirectory: ''
+  tfvarsFile: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Terraform Plan for Deployment'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      terraform plan -var-file=${{ parameters.tfvarsFile }} -out=tfplan
+    workingDirectory: ${{ parameters.workingDirectory }}
