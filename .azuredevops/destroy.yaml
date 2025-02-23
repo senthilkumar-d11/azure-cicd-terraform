@@ -17,8 +17,11 @@ variables:
   - name: azureServiceConnection
     value: 'CITI-IAC-TF'
   - name: workingDirectory
-    value: '$(Build.SourcesDirectory)'
+    value: '$(Build.SourcesDirectory)/source'
 
+################################################################################
+# 1. PLAN STAGE
+################################################################################
 stages:
 - stage: Plan
   displayName: 'Plan Infrastructure'
@@ -26,16 +29,69 @@ stages:
   - job: Terraform_Plan
     displayName: 'Terraform Plan'
     steps:
+      # By default, the pipeline checks out the repo here
+      - checkout: self
+
+      # Publish the entire repo as an artifact named "tf-files"
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Terraform Files'
+        inputs:
+          targetPath: '$(Build.SourcesDirectory)'
+          artifact: 'tf-files'
+      
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download repo-contents artifact'
+        inputs:
+          buildType: 'current'
+          artifact: 'tf-files'
+          path: '$(workingDirectory)'      
+
+      # By default, the pipeline checks out the repo here
+      - template: templates/terraform-init.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: '$(workingDirectory)'
+          TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
+
+      - template: templates/terraform-plan-destroy.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          workingDirectory: '$(workingDirectory)'
+          tfvarsFile: ${{ parameters.environment }}.tfvars
+
+################################################################################
+# 2. DESTROY STAGE
+################################################################################
+- stage: Destroy
+  displayName: 'Destroy Infrastructure'
+  dependsOn: Plan
+  condition: succeeded()  # or run this manually if desired
+  jobs:
+  - job: Terraform_Destroy
+    displayName: 'Terraform Destroy'
+    steps:
+      # Disable default checkout
+      - checkout: none 
+
+      # Download the same tf-files artifact from the Plan stage
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Terraform Files'
+        inputs:
+          artifact: 'tf-files'
+          path: '$(workingDirectory)'
+
       - template: templates/terraform-init.yml
         parameters:
           azureServiceConnection: $(azureServiceConnection)
           workingDirectory: $(workingDirectory)
           TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
+
       - template: templates/terraform-plan-destroy.yml
         parameters:
           azureServiceConnection: $(azureServiceConnection)
           workingDirectory: $(workingDirectory)
           tfvarsFile: ${{ parameters.environment }}.tfvars
+
       - template: templates/terraform-destroy.yml
         parameters:
           azureServiceConnection: $(azureServiceConnection)

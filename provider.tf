@@ -7,10 +7,6 @@ terraform {
     }
   }
   backend "azurerm" {
-    # resource_group_name   = "citi-sc-log"
-    # storage_account_name  = "cskstgtfstate"
-    # container_name        = "statefiles"
-    # key                   = "testing.tfstate"
   }
 }
 
